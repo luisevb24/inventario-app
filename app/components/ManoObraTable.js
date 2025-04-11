@@ -63,7 +63,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem }) {
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
-      <h3 className="text-lg font-semibold p-4 bg-blue-50 border-b">
+      <h3 className="text-lg font-semibold p-4 bg-primary text-white border-b">
         Mano de Obra
       </h3>
       
@@ -108,7 +108,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem }) {
             })}
             
             {/* Fila para añadir nuevo item */}
-            <tr className="bg-blue-50">
+            <tr className="bg-light-blue">
               <td className="border p-2">
                 <input
                   type="text"
@@ -116,7 +116,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem }) {
                   value={newItem.descripcion}
                   onChange={handleChange}
                   placeholder="Descripción del trabajo"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 />
               </td>
@@ -128,7 +128,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem }) {
                   onChange={handleChange}
                   min="0.01"
                   step="0.01"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 />
               </td>
@@ -139,7 +139,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem }) {
                   value={newItem.unidad}
                   onChange={handleChange}
                   placeholder="ej. horas, días"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 />
               </td>
@@ -152,7 +152,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem }) {
                   min="0.01"
                   step="0.01"
                   placeholder="0.00"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 />
               </td>
@@ -161,7 +161,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem }) {
                   name="tipoHorario"
                   value={newItem.tipoHorario}
                   onChange={handleChange}
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 >
                   {Object.keys(multiplicadores).map(tipo => (
@@ -178,7 +178,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem }) {
               <td className="border p-2">
                 <button
                   onClick={handleSubmit}
-                  className="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition-colors"
+                  className="bg-primary text-white py-1 px-3 rounded hover:bg-opacity-80 transition-colors"
                 >
                   Agregar
                 </button>
@@ -188,7 +188,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem }) {
           
           {/* Pie de la tabla con el total de esta categoría */}
           <tfoot>
-            <tr className="bg-gray-100 font-bold">
+            <tr className="bg-light-blue font-bold">
               <td colSpan="6" className="border p-3 text-right">Total Mano de Obra:</td>
               <td className="border p-3">${total.toFixed(2)}</td>
               <td className="border p-3"></td>

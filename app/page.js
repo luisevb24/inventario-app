@@ -51,11 +51,25 @@ export default function Home() {
   
   return (
     <main className="max-w-6xl mx-auto p-4">
-      <h1 className="text-2xl font-bold text-center my-6">Sistema de Inventario</h1>
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+        <div className="p-6 bg-tertiary bg-opacity-10">
+          <h1 className="text-3xl font-bold text-tertiary text-center">Sistema de Inventario</h1>
+          <p className="text-center mt-2 text-gray-600">Gestiona tu inventario de manera eficiente</p>
+          
+          <div className="flex justify-center gap-4 mt-4">
+            <button className="bg-primary text-white py-2 px-4 rounded shadow hover:bg-opacity-90 transition-colors">
+              Nuevo Proyecto
+            </button>
+            <button className="bg-secondary text-white py-2 px-4 rounded shadow hover:bg-opacity-90 transition-colors">
+              Importar Datos
+            </button>
+          </div>
+        </div>
+      </div>
       
       {/* Sección de Mano de Obra */}
       <div className="my-8">
-        <h2 className="text-xl font-semibold mb-4">Mano de Obra</h2>
+        <h2 className="text-xl font-semibold mb-4 text-tertiary">Mano de Obra</h2>
         <ManoObraTable 
           items={getItemsByCategory('Mano de obra')} 
           onAddItem={addItem} 
@@ -66,7 +80,7 @@ export default function Home() {
       {/* Renderizar una tabla para cada categoría */}
       {categorias.map(categoria => (
         <div key={categoria} className="my-8">
-          <h2 className="text-xl font-semibold mb-4">{categoria}</h2>
+          <h2 className="text-xl font-semibold mb-4 text-tertiary">{categoria}</h2>
           <InventarioTable 
             items={getItemsByCategory(categoria)} 
             onAddItem={addItem} 

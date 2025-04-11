@@ -85,7 +85,7 @@ export default function ProyectoPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -93,37 +93,37 @@ export default function ProyectoPage() {
   return (
     <main className="max-w-6xl mx-auto p-4">
       <div className="flex justify-between items-center my-6">
-        <Link href="/" className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors">
+        <Link href="/" className="bg-tertiary hover:bg-opacity-90 text-white py-2 px-4 rounded shadow transition-colors">
           ← Volver al Inventario General
         </Link>
-        <h1 className="text-2xl font-bold text-center">Proyecto: {projectId}</h1>
+        <h1 className="text-2xl font-bold text-center text-tertiary">Proyecto: {projectId}</h1>
         <div className="w-28"></div> {/* Spacer for alignment */}
       </div>
       
       {/* Project Info Card */}
       {projectData && (
         <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
-          <h2 className="text-xl font-semibold p-4 bg-blue-100 border-b">Información del Proyecto</h2>
-          <div className="p-4">
+          <h2 className="text-xl font-semibold p-4 bg-primary text-white border-b">Información del Proyecto</h2>
+          <div className="p-4 bg-primary bg-opacity-5">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="font-semibold">ID Proyecto:</p>
+                <p className="font-semibold text-tertiary">ID Proyecto:</p>
                 <p>{projectData.id}</p>
               </div>
               <div>
-                <p className="font-semibold">Estado:</p>
+                <p className="font-semibold text-tertiary">Estado:</p>
                 <p>{projectData.status}</p>
               </div>
               <div>
-                <p className="font-semibold">Responsable:</p>
+                <p className="font-semibold text-tertiary">Responsable:</p>
                 <p>{projectData.responsable}</p>
               </div>
               <div>
-                <p className="font-semibold">Tipo de Trabajo:</p>
+                <p className="font-semibold text-tertiary">Tipo de Trabajo:</p>
                 <p>{projectData.tipoTrabajo}</p>
               </div>
               <div>
-                <p className="font-semibold">Fecha Compromiso:</p>
+                <p className="font-semibold text-tertiary">Fecha Compromiso:</p>
                 <p>{projectData.fechaCompromiso}</p>
               </div>
             </div>
@@ -133,7 +133,7 @@ export default function ProyectoPage() {
       
       {/* Labor Section */}
       <div className="my-8">
-        <h2 className="text-xl font-semibold mb-4">Mano de Obra</h2>
+        <h2 className="text-xl font-semibold mb-4 text-tertiary">Mano de Obra</h2>
         <ManoObraTable 
           items={getItemsByCategory('Mano de obra')} 
           onAddItem={addItem} 
@@ -144,7 +144,7 @@ export default function ProyectoPage() {
       {/* Render a table for each category */}
       {categorias.map(categoria => (
         <div key={categoria} className="my-8">
-          <h2 className="text-xl font-semibold mb-4">{categoria}</h2>
+          <h2 className="text-xl font-semibold mb-4 text-tertiary">{categoria}</h2>
           <InventarioTable 
             items={getItemsByCategory(categoria)} 
             onAddItem={addItem} 

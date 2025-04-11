@@ -46,7 +46,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
-      <h3 className="text-lg font-semibold p-4 bg-blue-50 border-b">
+      <h3 className="text-lg font-semibold p-4 bg-primary text-white border-b">
         Inventario de {categoria}
       </h3>
       
@@ -84,7 +84,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
             ))}
             
             {/* Fila para añadir nuevo item */}
-            <tr className="bg-blue-50">
+            <tr className="bg-light-blue">
               <td className="border p-2">
                 <input
                   type="text"
@@ -92,7 +92,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
                   value={newItem.descripcion}
                   onChange={handleChange}
                   placeholder="Descripción del item"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 />
               </td>
@@ -104,7 +104,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
                   onChange={handleChange}
                   min="0.01"
                   step="0.01"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 />
               </td>
@@ -115,7 +115,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
                   value={newItem.unidad}
                   onChange={handleChange}
                   placeholder="ej. unidades, kg, litros"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 />
               </td>
@@ -128,7 +128,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
                   min="0.01"
                   step="0.01"
                   placeholder="0.00"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 />
               </td>
@@ -138,7 +138,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
               <td className="border p-2">
                 <button
                   onClick={handleSubmit}
-                  className="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition-colors"
+                  className="bg-primary text-white py-1 px-3 rounded hover:bg-opacity-80 transition-colors"
                 >
                   Agregar
                 </button>
@@ -148,7 +148,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
           
           {/* Pie de la tabla con el total de esta categoría */}
           <tfoot>
-            <tr className="bg-gray-100 font-bold">
+            <tr className="bg-light-blue font-bold">
               <td colSpan="4" className="border p-3 text-right">Total {categoria}:</td>
               <td className="border p-3">${total.toFixed(2)}</td>
               <td className="border p-3"></td>
