@@ -1,84 +1,64 @@
 @import "tailwindcss";
 
 :root {
-  --primary: #002e4e;    /* Azul oscuro como color principal */
-  --secondary: #006c68;  /* Verde azulado */
-  --accent: #e69500;     /* Amarillo/naranja como acento */
-  --light-blue: #e6f0f8; /* Azul claro para fondos */
   --background: #ffffff;
   --foreground: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-secondary: var(--secondary);
-  --color-accent: var(--accent);
-  --color-light-blue: var(--light-blue);
-  --font-sans: var(--font-satoshi), var(--font-inter);
-  --font-heading: var(--font-inter-tight);
-  --font-mono: var(--font-geist-mono);
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --light-blue: #192d3e;
+    --background: #121212;
+    --foreground: #ffffff;
+  }
+  
+  /* Forzar estilos oscuros */
+  body {
+    @apply bg-gray-900 text-white;
+  }
+  
+  /* Mejorar contraste en tarjetas */
+  .bg-white {
+    @apply bg-gray-800;
+  }
+  
+  /* Mejorar contraste en bordes */
+  .border, .border-b {
+    @apply border-gray-700;
+  }
+  
+  /* Estilos para cabeceras de tablas */
+  .bg-gray-100 {
+    @apply bg-gray-700;
+  }
+  
+  /* Estilos para filas hover */
+  .hover\:bg-gray-50:hover {
+    @apply hover:bg-gray-700;
+  }
+  
+  /* Estilos para secciones de formulario */
+  .bg-blue-50 {
+    @apply bg-blue-900;
+  }
+  
+  /* Asegurar que textos sean legibles */
+  .text-gray-500 {
+    @apply text-gray-300;
+  }
+  
+  /* Colores para inputs en modo oscuro */
+  input, select {
+    @apply bg-gray-700 border-gray-600 text-white;
+  }
+  
+  /* Color de fondo para la página */
+  .bg-gray-50 {
+    @apply bg-gray-900;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans);
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
-  color: var(--primary);
-}
-
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
-}
-
-.btn-secondary {
-  background-color: var(--secondary);
-  color: white;
-}
-
-.btn-accent {
-  background-color: var(--accent);
-  color: white;
-}
-
-.text-primary {
-  color: var(--primary);
-}
-
-.text-secondary {
-  color: var(--secondary);
-}
-
-.text-accent {
-  color: var(--accent);
-}
-
-.bg-primary {
-  background-color: var(--primary);
-}
-
-.bg-secondary {
-  background-color: var(--secondary);
-}
-
-.bg-accent {
-  background-color: var(--accent);
-}
-
-.bg-light-blue {
-  background-color: var(--light-blue);
+  font-family: Arial, Helvetica, sans-serif;
 }
