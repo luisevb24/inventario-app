@@ -5,6 +5,13 @@ import InventarioTable from '../../components/InventarioTable';
 import ManoObraTable from '../../components/ManoObraTable';
 import TotalGeneral from '../../components/TotalGeneral';
 import Link from 'next/link';
+import { 
+  fetchProjectById,
+  fetchInventoryItems,
+  addInventoryItem,
+  deleteInventoryItem,
+  upsertProject
+} from '../../../lib/supabase';
 
 export default function ProyectoPage() {
   const params = useParams();
@@ -18,27 +25,55 @@ export default function ProyectoPage() {
   // Available categories
   const categorias = ['Equipo', 'Materiales', 'Consumibles', 'Otros'];
   
-  // Fetch project data from Notion when component mounts
+  // Cargar datos del proyecto desde Supabase
   useEffect(() => {
     async function fetchProjectData() {
       try {
         setLoading(true);
-        // Call your API route to get Notion data
-        const response = await fetch(`/api/notion?projectId=${projectId}`);
-        const data = await response.json();
         
-        if (data.error) {
-          console.error('Error fetching project data:', data.error);
-          return;
+        // Obtener información del proyecto
+        const project = await fetchProjectById(projectId);
+        
+        if (project) {
+          setProjectData(project);
+        } else {
+          // Si el proyecto no existe en Supabase pero sí en Notion
+          // Lo primero es obtener datos de Notion
+          try {
+            const response = await fetch(`/api/notion?projectId=${projectId}`);
+            const data = await response.json();
+            
+            if (data.error) {
+              console.error('Error fetching project data from Notion:', data.error);
+              return;
+            }
+            
+            // Crear el proyecto en Supabase
+            const notionData = data.projectData;
+            const newProject = {
+              id: projectId,
+              title: notionData.id,
+              status: notionData.status,
+              responsible: notionData.responsable,
+              work_type: notionData.tipoTrabajo,
+              commitment_date: notionData.fechaCompromiso
+            };
+            
+            const createdProject = await upsertProject(newProject);
+            if (createdProject) {
+              setProjectData(createdProject);
+            } else {
+              setProjectData(newProject);
+            }
+          } catch (error) {
+            console.error('Error creating project from Notion data:', error);
+          }
         }
         
-        setProjectData(data.projectData);
+        // Obtener los items del inventario
+        const inventoryItems = await fetchInventoryItems(projectId);
+        setItems(inventoryItems);
         
-        // Load project-specific inventory from localStorage if exists
-        const savedItems = localStorage.getItem(`inventario-items-${projectId}`);
-        if (savedItems) {
-          setItems(JSON.parse(savedItems));
-        }
       } catch (error) {
         console.error('Error:', error);
       } finally {
@@ -51,41 +86,48 @@ export default function ProyectoPage() {
     }
   }, [projectId]);
   
-  // Save items to localStorage when they change
-  useEffect(() => {
-    if (projectId && items.length > 0) {
-      localStorage.setItem(`inventario-items-${projectId}`, JSON.stringify(items));
+  // Función para agregar un nuevo item
+  async function addItem(newItem) {
+    try {
+      const addedItem = await addInventoryItem(newItem);
+      if (addedItem) {
+        setItems([...items, addedItem]);
+      }
+    } catch (error) {
+      console.error('Error al agregar item:', error);
     }
-  }, [items, projectId]);
-  
-  // Function to add new item
-  function addItem(newItem) {
-    setItems([...items, newItem]);
   }
   
-  // Function to remove item
-  function removeItem(id) {
-    setItems(items.filter(item => item.id !== id));
+  // Función para eliminar un item
+  async function removeItem(id) {
+    try {
+      const success = await deleteInventoryItem(id);
+      if (success) {
+        setItems(items.filter(item => item.id !== id));
+      }
+    } catch (error) {
+      console.error('Error al eliminar item:', error);
+    }
   }
   
-  // Filter items by category
+  // Filtrar items por categoría
   function getItemsByCategory(categoria) {
-    return items.filter(item => item.categoria === categoria);
+    return items.filter(item => item.category === categoria);
   }
   
-  // Calculate total considering multipliers for labor items
+  // Calcular total considerando multiplicadores para items de mano de obra
   const totalGeneral = items.reduce((sum, item) => {
-    if (item.categoria === 'Mano de obra') {
-      const multiplicador = item.multiplicador || 1;
-      return sum + (item.cantidad * item.costoUnitario * multiplicador);
+    if (item.category === 'Mano de obra') {
+      const multiplicador = item.multiplier || 1;
+      return sum + (item.quantity * item.unit_cost * multiplicador);
     }
-    return sum + (item.cantidad * item.costoUnitario);
+    return sum + (item.quantity * item.unit_cost);
   }, 0);
   
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -93,38 +135,38 @@ export default function ProyectoPage() {
   return (
     <main className="max-w-6xl mx-auto p-4">
       <div className="flex justify-between items-center my-6">
-        <Link href="/" className="bg-tertiary hover:bg-opacity-90 text-white py-2 px-4 rounded shadow transition-colors">
+        <Link href="/" className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors">
           ← Volver al Inventario General
         </Link>
-        <h1 className="text-2xl font-bold text-center text-tertiary">Proyecto: {projectId}</h1>
+        <h1 className="text-2xl font-bold text-center">Proyecto: {projectId}</h1>
         <div className="w-28"></div> {/* Spacer for alignment */}
       </div>
       
       {/* Project Info Card */}
       {projectData && (
         <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
-          <h2 className="text-xl font-semibold p-4 bg-primary text-white border-b">Información del Proyecto</h2>
-          <div className="p-4 bg-primary bg-opacity-5">
+          <h2 className="text-xl font-semibold p-4 bg-blue-100 border-b">Información del Proyecto</h2>
+          <div className="p-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="font-semibold text-tertiary">ID Proyecto:</p>
+                <p className="font-semibold">ID Proyecto:</p>
                 <p>{projectData.id}</p>
               </div>
               <div>
-                <p className="font-semibold text-tertiary">Estado:</p>
+                <p className="font-semibold">Estado:</p>
                 <p>{projectData.status}</p>
               </div>
               <div>
-                <p className="font-semibold text-tertiary">Responsable:</p>
-                <p>{projectData.responsable}</p>
+                <p className="font-semibold">Responsable:</p>
+                <p>{projectData.responsible}</p>
               </div>
               <div>
-                <p className="font-semibold text-tertiary">Tipo de Trabajo:</p>
-                <p>{projectData.tipoTrabajo}</p>
+                <p className="font-semibold">Tipo de Trabajo:</p>
+                <p>{projectData.work_type}</p>
               </div>
               <div>
-                <p className="font-semibold text-tertiary">Fecha Compromiso:</p>
-                <p>{projectData.fechaCompromiso}</p>
+                <p className="font-semibold">Fecha Compromiso:</p>
+                <p>{projectData.commitment_date && new Date(projectData.commitment_date).toLocaleDateString()}</p>
               </div>
             </div>
           </div>
@@ -133,23 +175,25 @@ export default function ProyectoPage() {
       
       {/* Labor Section */}
       <div className="my-8">
-        <h2 className="text-xl font-semibold mb-4 text-tertiary">Mano de Obra</h2>
+        <h2 className="text-xl font-semibold mb-4">Mano de Obra</h2>
         <ManoObraTable 
           items={getItemsByCategory('Mano de obra')} 
           onAddItem={addItem} 
-          onRemoveItem={removeItem} 
+          onRemoveItem={removeItem}
+          projectId={projectId}
         />
       </div>
       
       {/* Render a table for each category */}
       {categorias.map(categoria => (
         <div key={categoria} className="my-8">
-          <h2 className="text-xl font-semibold mb-4 text-tertiary">{categoria}</h2>
+          <h2 className="text-xl font-semibold mb-4">{categoria}</h2>
           <InventarioTable 
             items={getItemsByCategory(categoria)} 
             onAddItem={addItem} 
             onRemoveItem={removeItem}
             categoria={categoria}
+            projectId={projectId}
           />
         </div>
       ))}

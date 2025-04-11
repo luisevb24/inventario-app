@@ -1,52 +1,108 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { fetchCatalogItems } from '../../lib/supabase';
 
-export default function InventarioTable({ items, onAddItem, onRemoveItem, categoria }) {
+export default function InventarioTable({ items, onAddItem, onRemoveItem, categoria, projectId }) {
   // Estado para el nuevo item
   const [newItem, setNewItem] = useState({
-    descripcion: '',
-    cantidad: 1,
-    unidad: 'unidades',
-    costoUnitario: 0,
-    categoria: categoria // Asignar la categoría por defecto según la tabla
+    description: '',
+    quantity: 1,
+    unit: 'unidades',
+    unit_cost: 0,
+    category: categoria // Asignar la categoría por defecto según la tabla
   });
+
+  // Estado para el catálogo de items
+  const [catalogItems, setCatalogItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedCatalogItem, setSelectedCatalogItem] = useState(null);
+
+  // Cargar catálogo desde Supabase
+  useEffect(() => {
+    async function loadCatalog() {
+      setLoading(true);
+      try {
+        const items = await fetchCatalogItems(categoria);
+        setCatalogItems(items);
+      } catch (error) {
+        console.error('Error al cargar catálogo:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadCatalog();
+  }, [categoria]);
 
   // Manejar cambios en los campos del formulario
   function handleChange(e) {
     const { name, value } = e.target;
     setNewItem({
       ...newItem,
-      [name]: name === 'cantidad' || name === 'costoUnitario' 
+      [name]: name === 'quantity' || name === 'unit_cost' 
         ? parseFloat(value) || 0 
         : value
     });
   }
 
+  // Manejar selección de item del catálogo
+  function handleCatalogItemSelect(e) {
+    const itemId = e.target.value;
+    if (itemId === '') {
+      setSelectedCatalogItem(null);
+      return;
+    }
+
+    const selected = catalogItems.find(item => item.id.toString() === itemId);
+    if (selected) {
+      setSelectedCatalogItem(selected);
+      setNewItem({
+        description: selected.description,
+        unit: selected.unit,
+        unit_cost: selected.unit_cost,
+        quantity: 1,
+        category: categoria,
+        catalog_item_id: selected.id
+      });
+    }
+  }
+
   // Manejar envío del formulario
   function handleSubmit(e) {
     e.preventDefault();
-    onAddItem({
-      ...newItem,
-      id: Date.now()
-    });
+    
+    // Preparar el objeto para agregar al inventario
+    const itemToAdd = {
+      project_id: projectId,
+      description: newItem.description,
+      quantity: newItem.quantity,
+      unit: newItem.unit,
+      unit_cost: newItem.unit_cost,
+      category: categoria,
+      catalog_item_id: newItem.catalog_item_id
+    };
+    
+    onAddItem(itemToAdd);
+    
     // Restablecer el formulario
     setNewItem({
-      descripcion: '',
-      cantidad: 1,
-      unidad: 'unidades',
-      costoUnitario: 0,
-      categoria: categoria
+      description: '',
+      quantity: 1,
+      unit: 'unidades',
+      unit_cost: 0,
+      category: categoria
     });
+    setSelectedCatalogItem(null);
   }
 
   // Calcular el total para esta categoría
   const total = items.reduce((sum, item) => {
-    return sum + (item.cantidad * item.costoUnitario);
+    return sum + (item.quantity * item.unit_cost);
   }, 0);
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
-      <h3 className="text-lg font-semibold p-4 bg-primary text-white border-b">
+      <h3 className="text-lg font-semibold p-4 bg-blue-50 border-b">
         Inventario de {categoria}
       </h3>
       
@@ -67,11 +123,11 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
             {/* Filas con los items existentes */}
             {items.map(item => (
               <tr key={item.id} className="hover:bg-gray-50">
-                <td className="border p-3">{item.descripcion}</td>
-                <td className="border p-3">{item.cantidad}</td>
-                <td className="border p-3">{item.unidad}</td>
-                <td className="border p-3">${item.costoUnitario.toFixed(2)}</td>
-                <td className="border p-3">${(item.cantidad * item.costoUnitario).toFixed(2)}</td>
+                <td className="border p-3">{item.description}</td>
+                <td className="border p-3">{item.quantity}</td>
+                <td className="border p-3">{item.unit}</td>
+                <td className="border p-3">${item.unit_cost.toFixed(2)}</td>
+                <td className="border p-3">${(item.quantity * item.unit_cost).toFixed(2)}</td>
                 <td className="border p-3">
                   <button
                     onClick={() => onRemoveItem(item.id)}
@@ -84,61 +140,75 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
             ))}
             
             {/* Fila para añadir nuevo item */}
-            <tr className="bg-light-blue">
+            <tr className="bg-blue-50">
               <td className="border p-2">
+                <div className="mb-2">
+                  <select 
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    onChange={handleCatalogItemSelect}
+                    value={selectedCatalogItem?.id || ''}
+                  >
+                    <option value="">-- Seleccionar del catálogo --</option>
+                    {catalogItems.map(item => (
+                      <option key={item.id} value={item.id}>
+                        {item.description} (${item.unit_cost.toFixed(2)}/{item.unit})
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <input
                   type="text"
-                  name="descripcion"
-                  value={newItem.descripcion}
+                  name="description"
+                  value={newItem.description}
                   onChange={handleChange}
                   placeholder="Descripción del item"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                   required
                 />
               </td>
               <td className="border p-2">
                 <input
                   type="number"
-                  name="cantidad"
-                  value={newItem.cantidad}
+                  name="quantity"
+                  value={newItem.quantity}
                   onChange={handleChange}
                   min="0.01"
                   step="0.01"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                   required
                 />
               </td>
               <td className="border p-2">
                 <input
                   type="text"
-                  name="unidad"
-                  value={newItem.unidad}
+                  name="unit"
+                  value={newItem.unit}
                   onChange={handleChange}
                   placeholder="ej. unidades, kg, litros"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                   required
                 />
               </td>
               <td className="border p-2">
                 <input
                   type="number"
-                  name="costoUnitario"
-                  value={newItem.costoUnitario}
+                  name="unit_cost"
+                  value={newItem.unit_cost}
                   onChange={handleChange}
                   min="0.01"
                   step="0.01"
                   placeholder="0.00"
-                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                   required
                 />
               </td>
               <td className="border p-2">
-                ${(newItem.cantidad * newItem.costoUnitario).toFixed(2)}
+                ${(newItem.quantity * newItem.unit_cost).toFixed(2)}
               </td>
               <td className="border p-2">
                 <button
                   onClick={handleSubmit}
-                  className="bg-primary text-white py-1 px-3 rounded hover:bg-opacity-80 transition-colors"
+                  className="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition-colors"
                 >
                   Agregar
                 </button>
@@ -148,7 +218,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
           
           {/* Pie de la tabla con el total de esta categoría */}
           <tfoot>
-            <tr className="bg-light-blue font-bold">
+            <tr className="bg-gray-100 font-bold">
               <td colSpan="4" className="border p-3 text-right">Total {categoria}:</td>
               <td className="border p-3">${total.toFixed(2)}</td>
               <td className="border p-3"></td>
