@@ -4,7 +4,7 @@ export default function TotalGeneral({ total }) {
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden my-8">
       <div className="p-6">
-        <div className="flex justify-between items-center py-3 border-b border-table-gray-medium/20">
+        <div className="flex justify-between items-center py-3 border-b border-gray-300/20">
           <span className="text-lg font-bold text-tertiary">Total General:</span>
           <span className="text-xl font-bold text-primary">${total.toFixed(2)}</span>
         </div>

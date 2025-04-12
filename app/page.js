@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import InventarioTable from '../../components/InventarioTable';
-import ManoObraTable from '../../components/ManoObraTable';
-import TotalGeneral from '../../components/TotalGeneral';
+import InventarioTable from './components/InventarioTable';
+import ManoObraTable from './components/ManoObraTable';
+import TotalGeneral from './components/TotalGeneral';
 import Link from 'next/link';
 import { 
   fetchProjectById,
@@ -11,7 +11,7 @@ import {
   addInventoryItem,
   deleteInventoryItem,
   upsertProject
-} from '../../../lib/supabase';
+} from '../lib/supabase';
 
 export default function ProyectoPage() {
   const params = useParams();

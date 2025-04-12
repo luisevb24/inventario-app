@@ -65,25 +65,25 @@ table {
 }
 
 th, td {
-  @apply border border-table-gray-medium/30;
+  @apply border border-gray-300/30;
 }
 
 /* Mejorar aspecto visual de las tablas */
 thead th {
-  @apply bg-table-gray-light text-table-gray-dark font-medium;
+  @apply bg-gray-100 text-gray-700 font-medium;
 }
 
 tbody tr:nth-child(even) {
-  @apply bg-bg-beige/50;
+  @apply bg-gray-50;
 }
 
 tbody tr:hover {
-  @apply bg-light-blue/20;
+  @apply bg-blue-50/20;
 }
 
 /* Mejoras para secciones de formulario y tarjetas */
 .bg-blue-50, .bg-blue-100 {
-  @apply bg-bg-beige;
+  @apply bg-gray-50;
 }
 
 /* Botones más consistentes */
@@ -99,4 +99,4 @@ button {
 /* Contenedores con más respiro */
 .p-3, .p-4 {
   @apply py-3 px-4;
-}
+} 
