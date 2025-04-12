@@ -9,21 +9,23 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es" className={`${interTight.variable} ${inter.variable} ${satoshi.variable}`}>
-      <body className="bg-gray-50 min-h-screen">
+      <body className="bg-bg-beige min-h-screen">
         <header className="bg-tertiary text-white py-4">
           <div className="container mx-auto px-4">
-            <h1 className="text-2xl font-bold">Sistema de Inventario</h1>
-            <p>Powered by GrowPals</p>
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold">Sistema de Inventario</h1>
+              <p className="text-sm">Your Business Fertilizer</p>
+            </div>
           </div>
         </header>
         
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-6">
           {children}
         </div>
         
-        <footer className="bg-secondary text-white py-6 mt-auto">
+        <footer className="bg-secondary text-white py-4 mt-auto">
           <div className="container mx-auto px-4 text-center">
-            <p>© {new Date().getFullYear()} GrowPals - Your Business Fertilizer</p>
+            <p>© {new Date().getFullYear()} GrowPals</p>
           </div>
         </footer>
       </body>

@@ -1,134 +1,112 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import InventarioTable from '../../components/InventarioTable';
+import ManoObraTable from '../../components/ManoObraTable';
+import TotalGeneral from '../../components/TotalGeneral';
 import Link from 'next/link';
-import InventarioTable from './components/InventarioTable';
-import ManoObraTable from './components/ManoObraTable';
-import TotalGeneral from './components/TotalGeneral';
 import { 
-  fetchProjects, 
-  fetchInventoryItems, 
-  addInventoryItem, 
+  fetchProjectById,
+  fetchInventoryItems,
+  addInventoryItem,
   deleteInventoryItem,
   upsertProject
-} from '../lib/supabase';
+} from '../../../lib/supabase';
 
-export default function Home() {
-  // Estado para almacenar los items con categorías
-  const [items, setItems] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState('general');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const router = useRouter();
+export default function ProyectoPage() {
+  const params = useParams();
+  const projectId = params.id;
   
-  // Lista de categorías disponibles
+  // State for project data and items
+  const [projectData, setProjectData] = useState(null);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Available categories
   const categorias = ['Equipo', 'Materiales', 'Consumibles', 'Otros'];
   
-  // Cargar proyectos desde Supabase
+  // Cargar datos del proyecto desde Supabase
   useEffect(() => {
-    async function loadProjects() {
+    async function fetchProjectData() {
       try {
-        setError(null);
-        const projectsData = await fetchProjects();
-        setProjects(projectsData);
+        setLoading(true);
         
-        // Asegurarnos de que el inventario general existe
-        const generalExists = projectsData.find(p => p.id === 'general');
+        // Obtener información del proyecto
+        const project = await fetchProjectById(projectId);
         
-        if (!generalExists) {
-          console.log('Creando proyecto general...');
-          const generalProject = {
-            id: 'general',
-            title: 'Inventario General',
-            status: 'Activo',
-            created_at: new Date().toISOString()
-          };
-          
-          await upsertProject(generalProject);
-          
-          // Actualizar la lista de proyectos
-          setProjects(prev => [...prev, generalProject]);
+        if (project) {
+          setProjectData(project);
+        } else {
+          // Si el proyecto no existe en Supabase pero sí en Notion
+          // Lo primero es obtener datos de Notion
+          try {
+            const response = await fetch(`/api/notion?projectId=${projectId}`);
+            const data = await response.json();
+            
+            if (data.error) {
+              console.error('Error fetching project data from Notion:', data.error);
+              return;
+            }
+            
+            // Crear el proyecto en Supabase
+            const notionData = data.projectData;
+            const newProject = {
+              id: projectId,
+              title: notionData.id,
+              status: notionData.status,
+              responsible: notionData.responsable,
+              work_type: notionData.tipoTrabajo,
+              commitment_date: notionData.fechaCompromiso
+            };
+            
+            const createdProject = await upsertProject(newProject);
+            if (createdProject) {
+              setProjectData(createdProject);
+            } else {
+              setProjectData(newProject);
+            }
+          } catch (error) {
+            console.error('Error creating project from Notion data:', error);
+          }
         }
+        
+        // Obtener los items del inventario
+        const inventoryItems = await fetchInventoryItems(projectId);
+        setItems(inventoryItems);
+        
       } catch (error) {
-        console.error('Error al cargar proyectos:', error);
-        setError('No se pudieron cargar los proyectos. Por favor, verifica la conexión a la base de datos.');
-      }
-    }
-    
-    loadProjects();
-  }, []);
-  
-  // Cargar items desde Supabase cuando cambia el proyecto seleccionado
-  useEffect(() => {
-    async function loadItems() {
-      setLoading(true);
-      setError(null);
-      try {
-        if (selectedProjectId) {
-          const inventoryItems = await fetchInventoryItems(selectedProjectId);
-          setItems(inventoryItems);
-        }
-      } catch (error) {
-        console.error('Error al cargar items:', error);
-        setError('No se pudieron cargar los items del proyecto');
+        console.error('Error:', error);
       } finally {
         setLoading(false);
       }
     }
     
-    loadItems();
-  }, [selectedProjectId]);
+    if (projectId) {
+      fetchProjectData();
+    }
+  }, [projectId]);
   
   // Función para agregar un nuevo item
   async function addItem(newItem) {
     try {
-      setError(null);
-      
-      // Validar datos básicos
-      if (!newItem.project_id || !newItem.description || !newItem.category) {
-        console.error('Datos del item incompletos', newItem);
-        alert('Los datos del item están incompletos');
-        return;
-      }
-      
-      // Asegurarse de que project_id existe
-      if (newItem.project_id !== 'general' && !projects.find(p => p.id === newItem.project_id)) {
-        console.error('El proyecto no existe', newItem.project_id);
-        alert('El proyecto seleccionado no existe');
-        return;
-      }
-      
       const addedItem = await addInventoryItem(newItem);
       if (addedItem) {
-        setItems(prevItems => [...prevItems, addedItem]);
-      } else {
-        alert('No se pudo agregar el item. Inténtalo de nuevo.');
+        setItems([...items, addedItem]);
       }
     } catch (error) {
       console.error('Error al agregar item:', error);
-      setError('Error al agregar item al inventario');
     }
   }
   
   // Función para eliminar un item
   async function removeItem(id) {
-    if (!id) {
-      console.error('ID de item no proporcionado');
-      return;
-    }
-    
     try {
-      setError(null);
       const success = await deleteInventoryItem(id);
       if (success) {
-        setItems(prevItems => prevItems.filter(item => item.id !== id));
-      } else {
-        alert('No se pudo eliminar el item. Inténtalo de nuevo.');
+        setItems(items.filter(item => item.id !== id));
       }
     } catch (error) {
       console.error('Error al eliminar item:', error);
-      setError('Error al eliminar item del inventario');
     }
   }
   
@@ -137,95 +115,91 @@ export default function Home() {
     return items.filter(item => item.category === categoria);
   }
   
-  // Calcular el total general de todas las categorías
+  // Calcular total considerando multiplicadores para items de mano de obra
   const totalGeneral = items.reduce((sum, item) => {
-    // Para los items de mano de obra, considerar el multiplicador
     if (item.category === 'Mano de obra') {
-      const multiplicador = parseFloat(item.multiplier) || 1;
-      return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_cost) || 0) * multiplicador);
+      const multiplicador = item.multiplier || 1;
+      return sum + (item.quantity * item.unit_cost * multiplicador);
     }
-    return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_cost) || 0));
+    return sum + (item.quantity * item.unit_cost);
   }, 0);
   
-  // Redirigir a la página del proyecto específico
-  function handleProjectSelect(e) {
-    const projectId = e.target.value;
-    if (projectId === 'general') {
-      setSelectedProjectId('general');
-    } else {
-      router.push(`/proyecto/${projectId}`);
-    }
-  }
-  
-  if (loading && !error) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
   
   return (
-    <main className="max-w-6xl mx-auto p-4">
-      <div className="flex justify-between items-center my-6">
-        <h1 className="text-2xl font-bold">Sistema de Inventario</h1>
-        
-        <div className="flex items-center space-x-4">
-          <select
-            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-            value={selectedProjectId}
-            onChange={handleProjectSelect}
-          >
-            <option value="general">Inventario General</option>
-            {projects
-              .filter(p => p.id !== 'general')
-              .map(project => (
-                <option key={project.id} value={project.id}>
-                  {project.title || project.id}
-                </option>
-              ))
-            }
-          </select>
-          
-          <Link href="/catalogo" className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition-colors">
-            Gestionar Catálogo
-          </Link>
-        </div>
+    <main>
+      <div className="flex justify-between items-center mb-6">
+        <Link href="/" className="bg-tertiary hover:bg-tertiary/90 text-white py-2 px-4 rounded transition-colors">
+          ← Volver
+        </Link>
+        <h1 className="text-2xl font-bold text-center">{projectId}</h1>
+        <Link href="/catalogo" className="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded transition-colors">
+          Catálogo
+        </Link>
       </div>
       
-      {error && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
-          <p className="font-bold">Error</p>
-          <p>{error}</p>
+      {/* Project Info Card */}
+      {projectData && (
+        <div className="bg-white rounded-lg shadow overflow-hidden mb-8">
+          <div className="p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="font-semibold">ID Proyecto:</p>
+                <p>{projectData.id}</p>
+              </div>
+              <div>
+                <p className="font-semibold">Estado:</p>
+                <p>{projectData.status}</p>
+              </div>
+              <div>
+                <p className="font-semibold">Responsable:</p>
+                <p>{projectData.responsible}</p>
+              </div>
+              <div>
+                <p className="font-semibold">Tipo de Trabajo:</p>
+                <p>{projectData.work_type}</p>
+              </div>
+              <div>
+                <p className="font-semibold">Fecha Compromiso:</p>
+                <p>{projectData.commitment_date && new Date(projectData.commitment_date).toLocaleDateString()}</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
       
-      {/* Sección de Mano de Obra */}
-      <div className="my-8">
-        <h2 className="text-xl font-semibold mb-4">Mano de Obra</h2>
+      {/* Labor Section */}
+      <div className="my-6">
+        <h2 className="text-xl font-semibold mb-2">Mano de Obra</h2>
         <ManoObraTable 
           items={getItemsByCategory('Mano de obra')} 
           onAddItem={addItem} 
           onRemoveItem={removeItem}
-          projectId={selectedProjectId}
+          projectId={projectId}
         />
       </div>
       
-      {/* Renderizar una tabla para cada categoría */}
+      {/* Render a table for each category */}
       {categorias.map(categoria => (
-        <div key={categoria} className="my-8">
-          <h2 className="text-xl font-semibold mb-4">{categoria}</h2>
+        <div key={categoria} className="my-6">
+          <h2 className="text-xl font-semibold mb-2">{categoria}</h2>
           <InventarioTable 
             items={getItemsByCategory(categoria)} 
             onAddItem={addItem} 
             onRemoveItem={removeItem}
             categoria={categoria}
-            projectId={selectedProjectId}
+            projectId={projectId}
           />
         </div>
       ))}
       
-      {/* Componente para mostrar el total general */}
+      {/* Total Summary Component */}
       <TotalGeneral total={totalGeneral} />
     </main>
   );

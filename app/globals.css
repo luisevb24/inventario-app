@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #faf6f3;
   --foreground: #171717;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #121212;
-    --foreground: #ffffff;
+    --background: #052a30;
+    --foreground: #faf6f3;
   }
   
   /* Forzar estilos oscuros */
@@ -36,11 +36,6 @@
     @apply hover:bg-gray-700;
   }
   
-  /* Estilos para secciones de formulario */
-  .bg-blue-50 {
-    @apply bg-blue-900;
-  }
-  
   /* Asegurar que textos sean legibles */
   .text-gray-500 {
     @apply text-gray-300;
@@ -60,5 +55,48 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-satoshi), Arial, Helvetica, sans-serif;
+}
+
+/* Simplificar bordes de tabla */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+th, td {
+  @apply border border-table-gray-medium/30;
+}
+
+/* Mejorar aspecto visual de las tablas */
+thead th {
+  @apply bg-table-gray-light text-table-gray-dark font-medium;
+}
+
+tbody tr:nth-child(even) {
+  @apply bg-bg-beige/50;
+}
+
+tbody tr:hover {
+  @apply bg-light-blue/20;
+}
+
+/* Mejoras para secciones de formulario y tarjetas */
+.bg-blue-50, .bg-blue-100 {
+  @apply bg-bg-beige;
+}
+
+/* Botones más consistentes */
+button {
+  @apply transition-all duration-200;
+}
+
+/* Simplificar interfaces */
+.shadow-lg {
+  @apply shadow-md;
+}
+
+/* Contenedores con más respiro */
+.p-3, .p-4 {
+  @apply py-3 px-4;
 }
