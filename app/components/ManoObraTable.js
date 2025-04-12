@@ -25,17 +25,20 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
   // Estado para catálogo de mano de obra
   const [catalogItems, setCatalogItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [selectedCatalogItem, setSelectedCatalogItem] = useState(null);
 
   // Cargar catálogo desde Supabase
   useEffect(() => {
     async function loadCatalog() {
       setLoading(true);
+      setError(null);
       try {
         const items = await fetchCatalogItems('Mano de obra');
         setCatalogItems(items);
       } catch (error) {
         console.error('Error al cargar catálogo de mano de obra:', error);
+        setError('No se pudo cargar el catálogo');
       } finally {
         setLoading(false);
       }
@@ -54,12 +57,17 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
         type: value,
         multiplier: multiplicadores[value] || 1
       });
+    } else if (name === 'quantity' || name === 'unit_cost') {
+      // Asegurar que los valores numéricos sean parseados correctamente
+      const numericValue = value === '' ? '' : parseFloat(value) || 0;
+      setNewItem({
+        ...newItem,
+        [name]: numericValue
+      });
     } else {
       setNewItem({
         ...newItem,
-        [name]: name === 'quantity' || name === 'unit_cost' 
-          ? parseFloat(value) || 0 
-          : value
+        [name]: value
       });
     }
   }
@@ -69,6 +77,15 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
     const itemId = e.target.value;
     if (itemId === '') {
       setSelectedCatalogItem(null);
+      setNewItem({
+        description: '',
+        quantity: 1,
+        unit: 'horas',
+        unit_cost: 0,
+        type: 'Normal',
+        multiplier: 1,
+        category: 'Mano de obra'
+      });
       return;
     }
 
@@ -78,10 +95,10 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
       setNewItem({
         description: selected.description,
         unit: selected.unit || 'horas',
-        unit_cost: selected.unit_cost,
+        unit_cost: parseFloat(selected.unit_cost) || 0,
         quantity: 1,
         type: selected.type || 'Normal',
-        multiplier: selected.multiplier || multiplicadores[selected.type] || 1,
+        multiplier: parseFloat(selected.multiplier) || multiplicadores[selected.type] || 1,
         category: 'Mano de obra',
         catalog_item_id: selected.id
       });
@@ -92,18 +109,33 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
   function handleSubmit(e) {
     e.preventDefault();
     
+    // Validar datos antes de enviar
+    if (!newItem.description.trim()) {
+      alert('La descripción es obligatoria');
+      return;
+    }
+    
+    if (!projectId) {
+      alert('No se ha seleccionado un proyecto');
+      return;
+    }
+    
     // Preparar el objeto para agregar al inventario
     const itemToAdd = {
       project_id: projectId,
-      description: newItem.description,
-      quantity: newItem.quantity,
-      unit: newItem.unit,
-      unit_cost: newItem.unit_cost,
+      description: newItem.description.trim(),
+      quantity: parseFloat(newItem.quantity) || 0,
+      unit: newItem.unit.trim(),
+      unit_cost: parseFloat(newItem.unit_cost) || 0,
       type: newItem.type,
-      multiplier: newItem.multiplier,
-      category: 'Mano de obra',
-      catalog_item_id: newItem.catalog_item_id
+      multiplier: parseFloat(newItem.multiplier) || 1,
+      category: 'Mano de obra'
     };
+    
+    // Solo agregar catalog_item_id si existe
+    if (newItem.catalog_item_id) {
+      itemToAdd.catalog_item_id = newItem.catalog_item_id;
+    }
     
     onAddItem(itemToAdd);
     
@@ -122,8 +154,8 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
 
   // Calcular el subtotal para un item (incluyendo el multiplicador)
   function calcularSubtotal(item) {
-    const multiplicador = item.multiplier || multiplicadores[item.type] || 1;
-    return item.quantity * item.unit_cost * multiplicador;
+    const multiplicador = parseFloat(item.multiplier) || multiplicadores[item.type] || 1;
+    return (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_cost) || 0) * multiplicador;
   }
 
   // Calcular el total para esta categoría
@@ -136,6 +168,12 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
       <h3 className="text-lg font-semibold p-4 bg-blue-50 border-b">
         Mano de Obra
       </h3>
+      
+      {error && (
+        <div className="p-4 bg-red-100 border-l-4 border-red-500 text-red-700">
+          <p>{error}</p>
+        </div>
+      )}
       
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
@@ -155,16 +193,19 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
           <tbody>
             {/* Filas con los items existentes */}
             {items.map(item => {
-              const multiplicador = item.multiplier || multiplicadores[item.type] || 1;
+              const multiplicador = parseFloat(item.multiplier) || multiplicadores[item.type] || 1;
+              const quantity = parseFloat(item.quantity) || 0;
+              const unitCost = parseFloat(item.unit_cost) || 0;
+              
               return (
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="border p-3">{item.description}</td>
-                  <td className="border p-3">{item.quantity}</td>
+                  <td className="border p-3">{quantity}</td>
                   <td className="border p-3">{item.unit}</td>
-                  <td className="border p-3">${item.unit_cost.toFixed(2)}</td>
+                  <td className="border p-3">${unitCost.toFixed(2)}</td>
                   <td className="border p-3">{item.type}</td>
                   <td className="border p-3">x{multiplicador.toFixed(2)}</td>
-                  <td className="border p-3">${calcularSubtotal(item).toFixed(2)}</td>
+                  <td className="border p-3">${(quantity * unitCost * multiplicador).toFixed(2)}</td>
                   <td className="border p-3">
                     <button
                       onClick={() => onRemoveItem(item.id)}
@@ -185,11 +226,12 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
                     className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                     onChange={handleCatalogItemSelect}
                     value={selectedCatalogItem?.id || ''}
+                    disabled={loading}
                   >
                     <option value="">-- Seleccionar del catálogo --</option>
                     {catalogItems.map(item => (
                       <option key={item.id} value={item.id}>
-                        {item.description} (${item.unit_cost.toFixed(2)}/{item.unit || 'horas'})
+                        {item.description} (${parseFloat(item.unit_cost).toFixed(2)}/{item.unit || 'horas'})
                       </option>
                     ))}
                   </select>
@@ -233,7 +275,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
                   name="unit_cost"
                   value={newItem.unit_cost}
                   onChange={handleChange}
-                  min="0.01"
+                  min="0"
                   step="0.01"
                   placeholder="0.00"
                   className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
@@ -254,15 +296,16 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
                 </select>
               </td>
               <td className="border p-2">
-                x{newItem.multiplier.toFixed(2)}
+                x{parseFloat(newItem.multiplier).toFixed(2)}
               </td>
               <td className="border p-2">
-                ${(newItem.quantity * newItem.unit_cost * newItem.multiplier).toFixed(2)}
+                ${((parseFloat(newItem.quantity) || 0) * (parseFloat(newItem.unit_cost) || 0) * (parseFloat(newItem.multiplier) || 1)).toFixed(2)}
               </td>
               <td className="border p-2">
                 <button
                   onClick={handleSubmit}
                   className="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 transition-colors"
+                  disabled={loading}
                 >
                   Agregar
                 </button>
@@ -281,7 +324,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
         </table>
       </div>
       
-                {items.length === 0 && (
+      {items.length === 0 && (
         <div className="p-4 text-center text-gray-500">
           No hay mano de obra registrada. Agrega una usando el formulario de arriba.
         </div>

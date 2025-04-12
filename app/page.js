@@ -19,6 +19,7 @@ export default function Home() {
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState('general');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const router = useRouter();
   
   // Lista de categorías disponibles
@@ -28,19 +29,30 @@ export default function Home() {
   useEffect(() => {
     async function loadProjects() {
       try {
+        setError(null);
         const projectsData = await fetchProjects();
         setProjects(projectsData);
         
         // Asegurarnos de que el inventario general existe
-        if (!projectsData.find(p => p.id === 'general')) {
-          await upsertProject({
+        const generalExists = projectsData.find(p => p.id === 'general');
+        
+        if (!generalExists) {
+          console.log('Creando proyecto general...');
+          const generalProject = {
             id: 'general',
             title: 'Inventario General',
-            status: 'Activo'
-          });
+            status: 'Activo',
+            created_at: new Date().toISOString()
+          };
+          
+          await upsertProject(generalProject);
+          
+          // Actualizar la lista de proyectos
+          setProjects(prev => [...prev, generalProject]);
         }
       } catch (error) {
         console.error('Error al cargar proyectos:', error);
+        setError('No se pudieron cargar los proyectos. Por favor, verifica la conexión a la base de datos.');
       }
     }
     
@@ -51,6 +63,7 @@ export default function Home() {
   useEffect(() => {
     async function loadItems() {
       setLoading(true);
+      setError(null);
       try {
         if (selectedProjectId) {
           const inventoryItems = await fetchInventoryItems(selectedProjectId);
@@ -58,6 +71,7 @@ export default function Home() {
         }
       } catch (error) {
         console.error('Error al cargar items:', error);
+        setError('No se pudieron cargar los items del proyecto');
       } finally {
         setLoading(false);
       }
@@ -69,24 +83,52 @@ export default function Home() {
   // Función para agregar un nuevo item
   async function addItem(newItem) {
     try {
+      setError(null);
+      
+      // Validar datos básicos
+      if (!newItem.project_id || !newItem.description || !newItem.category) {
+        console.error('Datos del item incompletos', newItem);
+        alert('Los datos del item están incompletos');
+        return;
+      }
+      
+      // Asegurarse de que project_id existe
+      if (newItem.project_id !== 'general' && !projects.find(p => p.id === newItem.project_id)) {
+        console.error('El proyecto no existe', newItem.project_id);
+        alert('El proyecto seleccionado no existe');
+        return;
+      }
+      
       const addedItem = await addInventoryItem(newItem);
       if (addedItem) {
-        setItems([...items, addedItem]);
+        setItems(prevItems => [...prevItems, addedItem]);
+      } else {
+        alert('No se pudo agregar el item. Inténtalo de nuevo.');
       }
     } catch (error) {
       console.error('Error al agregar item:', error);
+      setError('Error al agregar item al inventario');
     }
   }
   
   // Función para eliminar un item
   async function removeItem(id) {
+    if (!id) {
+      console.error('ID de item no proporcionado');
+      return;
+    }
+    
     try {
+      setError(null);
       const success = await deleteInventoryItem(id);
       if (success) {
-        setItems(items.filter(item => item.id !== id));
+        setItems(prevItems => prevItems.filter(item => item.id !== id));
+      } else {
+        alert('No se pudo eliminar el item. Inténtalo de nuevo.');
       }
     } catch (error) {
       console.error('Error al eliminar item:', error);
+      setError('Error al eliminar item del inventario');
     }
   }
   
@@ -99,10 +141,10 @@ export default function Home() {
   const totalGeneral = items.reduce((sum, item) => {
     // Para los items de mano de obra, considerar el multiplicador
     if (item.category === 'Mano de obra') {
-      const multiplicador = item.multiplier || 1;
-      return sum + (item.quantity * item.unit_cost * multiplicador);
+      const multiplicador = parseFloat(item.multiplier) || 1;
+      return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_cost) || 0) * multiplicador);
     }
-    return sum + (item.quantity * item.unit_cost);
+    return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_cost) || 0));
   }, 0);
   
   // Redirigir a la página del proyecto específico
@@ -115,7 +157,7 @@ export default function Home() {
     }
   }
   
-  if (loading) {
+  if (loading && !error) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -150,6 +192,13 @@ export default function Home() {
           </Link>
         </div>
       </div>
+      
+      {error && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
+          <p className="font-bold">Error</p>
+          <p>{error}</p>
+        </div>
+      )}
       
       {/* Sección de Mano de Obra */}
       <div className="my-8">
