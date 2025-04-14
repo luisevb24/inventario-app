@@ -4,7 +4,6 @@ import { useParams } from 'next/navigation';
 import InventarioTable from '../../components/InventarioTable';
 import ManoObraTable from '../../components/ManoObraTable';
 import TotalGeneral from '../../components/TotalGeneral';
-import Link from 'next/link';
 import { 
   fetchProjectById,
   fetchInventoryItems,
@@ -134,12 +133,8 @@ export default function ProyectoPage() {
   
   return (
     <main className="max-w-6xl mx-auto p-4">
-      <div className="flex justify-between items-center my-6">
-        <Link href="/" className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded transition-colors">
-          ← Volver al Inventario General
-        </Link>
-        <h1 className="text-2xl font-bold text-center">Proyecto: {projectId}</h1>
-        <div className="w-28"></div> {/* Spacer for alignment */}
+      <div className="my-6">
+        <h1 className="text-2xl font-bold text-center">Presupuesto: {projectId}</h1>
       </div>
       
       {/* Project Info Card */}
