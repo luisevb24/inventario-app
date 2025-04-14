@@ -20,6 +20,10 @@ module.exports = {
           medium: '#97a5a5',
           dark: '#153846',
           darker: '#052a30',
+        },
+        background: {
+          dark: '#006c68',
+          light: '#faf6f3',
         }
       },
       fontFamily: {

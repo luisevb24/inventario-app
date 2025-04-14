@@ -140,11 +140,11 @@ export default function ProyectoPage() {
       {/* Project Info Card */}
       {projectData && (
         <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
-          <h2 className="text-xl font-semibold p-4 bg-blue-100 border-b">Información del Proyecto</h2>
+          <h2 className="text-xl font-semibold p-4 bg-blue-100 border-b">Info de Ticket</h2>
           <div className="p-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="font-semibold">ID Proyecto:</p>
+                <p className="font-semibold">ID:</p>
                 <p>{projectData.id}</p>
               </div>
               <div>
