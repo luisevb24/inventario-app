@@ -29,6 +29,7 @@ module.exports = {
       fontFamily: {
         sans: ['var(--font-satoshi)', 'var(--font-inter)', 'sans-serif'],
         heading: ['var(--font-inter-tight)', 'sans-serif'],
+        satoshi: ['var(--font-satoshi)', 'sans-serif'],
       },
     },
   },

@@ -134,7 +134,8 @@ export default function ProyectoPage() {
   return (
     <main className="max-w-6xl mx-auto p-4">
       <div className="my-6">
-        <h1 className="text-2xl font-bold text-center">Presupuesto: {projectId}</h1>
+        <h1 className="text-2xl font-bold text-center">Presupuesto</h1>
+        <h1 className="text-2xl font-bold text-center">{projectId}</h1>
       </div>
       
       {/* Project Info Card */}

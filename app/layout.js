@@ -14,7 +14,7 @@ export default function RootLayout({ children }) {
     <html lang="es" className={`${interTight.variable} ${inter.variable} ${satoshi.variable}`}>
       <body className="bg-background-light dark:bg-background-dark text-primary min-h-screen">
         <ThemeProvider>
-          <header className="bg-secondary dark:bg-secondary text-white py-4">
+          <header className="bg-secondary dark:bg-secondary text-white py-4 font-satoshi font-semibold">
             <div className="container mx-auto px-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -46,7 +46,7 @@ export default function RootLayout({ children }) {
             {children}
           </div>
 
-          <footer className="bg-secondary dark:bg-gray-800 text-white py-4 mt-auto">
+          <footer className="bg-secondary dark:bg-gray-800 text-white py-4 mt-auto font-satoshi">
             <div className="container mx-auto px-4 text-center">
               <p>© {new Date().getFullYear()} GrowPals</p>
             </div>
