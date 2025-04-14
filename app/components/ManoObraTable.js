@@ -245,7 +245,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className='table-content'>
             {/* Filas con los items existentes */}
             {items.map(item => {
               const multiplicador = parseFloat(item.multiplier) || multiplicadores[item.type] || 1;
@@ -274,11 +274,11 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
             })}
 
             {/* Fila para añadir nuevo item */}
-            <tr className="bg-bg-beige/50">
+            <tr className="table-content">
               <td>
-                <div className="mb-2">
+                <div className="mb-2 table-content">
                   <select
-                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary table-content"
                     onChange={handleCatalogItemSelect}
                     value={selectedCatalogItem?.id || ''}
                     disabled={loading}

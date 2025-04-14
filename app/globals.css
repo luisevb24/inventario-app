@@ -46,9 +46,6 @@ th, td {
 
 /* Mejorar aspecto visual de las tablas */
 
-tbody tr:nth-child(even) {
-  @apply bg-gray-50;
-}
 
 tbody tr:hover {
   @apply bg-blue-50/20;

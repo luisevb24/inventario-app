@@ -143,18 +143,18 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
 
       <div className="overflow-x-auto">
         <table className="w-full" style={{ backgroundColor: '#faf6f3' }}>
-          <thead>
+          <thead className="bg-[#b4c0a2] text-xs text-center">
             <tr>
-              <th className="text-left">Descripción</th>
-              <th className="text-left">Cantidad</th>
-              <th className="text-left">Unidad</th>
-              <th className="text-left">Costo Unitario</th>
-              <th className="text-left">Subtotal</th>
-              <th className="text-left">Acciones</th>
+              <th >Descripción</th>
+              <th >Cantidad</th>
+              <th >Unidad</th>
+              <th >Costo Unitario</th>
+              <th >Subtotal</th>
+              <th >Acciones</th>
             </tr>
           </thead>
 
-          <tbody className="table-header">
+          <tbody className="table-content">
             {/* Filas con los items existentes */}
             {items.map(item => {
               const quantity = parseFloat(item.quantity) || 0;
@@ -180,11 +180,11 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
             })}
 
             {/* Fila para añadir nuevo item */}
-            <tr className="bg-bg-beige/50">
+            <tr className="table-content">
               <td>
                 <div className="mb-2">
                   <select
-                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary table-content"
                     onChange={handleCatalogItemSelect}
                     value={selectedCatalogItem?.id || ''}
                     disabled={loading}
@@ -260,7 +260,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
 
           {/* Pie de la tabla con el total de esta categoría */}
           <tfoot>
-            <tr className="bg-table-gray-light font-bold">
+            <tr className="table-header font-bold">
               <td colSpan="4" className="text-right">Total {categoria}:</td>
               <td>${total.toFixed(2)}</td>
               <td></td>
@@ -270,7 +270,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
       </div>
 
       {items.length === 0 && (
-        <div className="p-4 text-center text-gray-500">
+        <div className="table-header p-4 text-center bg-white">
           No hay items en {categoria}. Agrega uno usando el formulario de arriba.
         </div>
       )}
