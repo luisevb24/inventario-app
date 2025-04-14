@@ -39,11 +39,11 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
         // Obtener items de mano de obra del catálogo
         const items = await fetchCatalogItems('Mano de obra');
         setCatalogItems(items);
-        
+
         // Obtener costos unitarios para mano de obra
         const costs = await fetchUnitCosts(true); // true = solo para mano de obra
         setUnitCosts(costs);
-        
+
         // Establecer unidad por defecto si hay alguna disponible
         if (costs.length > 0) {
           const defaultUnit = costs.find(u => u.name === 'horas') || costs[0];
@@ -68,7 +68,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
   // Manejar cambios en los campos del formulario
   function handleChange(e) {
     const { name, value } = e.target;
-    
+
     if (name === 'type') {
       setNewItem({
         ...newItem,
@@ -115,7 +115,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
       // Mantener la unidad y costo unitario actuales
       const currentUnit = newItem.unit;
       const currentUnitCost = newItem.unit_cost;
-      
+
       setNewItem({
         description: '',
         quantity: 1,
@@ -131,11 +131,11 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
     const selected = catalogItems.find(item => item.id.toString() === itemId);
     if (selected) {
       setSelectedCatalogItem(selected);
-      
+
       // Mantener la unidad seleccionada si es posible
       let unitToUse = selected.unit || 'horas';
       let costToUse = parseFloat(selected.unit_cost) || 0;
-      
+
       // Si la unidad del item seleccionado existe en nuestra tabla de costos unitarios,
       // usar su costo por defecto
       const unitCost = unitCosts.find(uc => uc.name === unitToUse);
@@ -143,7 +143,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
         setSelectedUnitCost(unitCost);
         costToUse = unitCost.default_cost;
       }
-      
+
       setNewItem({
         description: selected.description,
         unit: unitToUse,
@@ -158,21 +158,19 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
   }
 
   // Manejar envío del formulario
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    
-    // Validar datos antes de enviar
+  
     if (!newItem.description.trim()) {
       alert('La descripción es obligatoria');
       return;
     }
-    
+  
     if (!projectId) {
       alert('No se ha seleccionado un proyecto');
       return;
     }
-    
-    // Preparar el objeto para agregar al inventario
+  
     const itemToAdd = {
       project_id: projectId,
       description: newItem.description.trim(),
@@ -183,30 +181,35 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
       multiplier: parseFloat(newItem.multiplier) || 1,
       category: 'Mano de obra'
     };
-    
-    // Añadir referencias si existen
+  
     if (newItem.catalog_item_id) {
       itemToAdd.catalog_item_id = newItem.catalog_item_id;
     }
-    
+  
     if (selectedUnitCost) {
       itemToAdd.unit_cost_id = selectedUnitCost.id;
     }
-    
-    onAddItem(itemToAdd);
-    
-    // Restablecer la descripción y cantidad, pero mantener la unidad y su costo
-    setNewItem({
+  
+    // Await the asynchronous call
+    const addedItem = await onAddItem(itemToAdd);
+    if (!addedItem) {
+      alert('Hubo un error al agregar el item');
+      return;
+    }
+  
+    // Reset specific fields (description and quantity)
+    setNewItem(prev => ({
+      ...prev,
       description: '',
       quantity: 1,
-      unit: newItem.unit,
-      unit_cost: newItem.unit_cost,
       type: 'Normal',
       multiplier: 1,
-      category: 'Mano de obra'
-    });
+      catalog_item_id: undefined
+    }));
     setSelectedCatalogItem(null);
   }
+  
+  
 
   // Calcular el subtotal para un item (incluyendo el multiplicador)
   function calcularSubtotal(item) {
@@ -220,35 +223,35 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
   }, 0);
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+    <div className="bg-white rounded-lg shadow overflow-hidden mb-6 text-tertiary">
       {error && (
         <div className="p-4 bg-red-100 border-l-4 border-red-500 text-red-700">
           <p>{error}</p>
         </div>
       )}
-      
-      <div className="overflow-x-auto text-tertiary">
-        <table className="w-full">
-          <thead>
+
+      <div className="overflow-x-auto">
+        <table className="w-full bg-[#faf6f3]">
+          <thead className='bg-[#b4c0a2] text-xs text-center'>
             <tr>
-              <th className="text-left">Descripción</th>
-              <th className="text-left">Cantidad</th>
-              <th className="text-left">Unidad</th>
-              <th className="text-left">Costo Unitario</th>
-              <th className="text-left">Tipo Horario</th>
-              <th className="text-left">Multiplicador</th>
-              <th className="text-left">Subtotal</th>
-              <th className="text-left">Acciones</th>
+              <th>Descripción</th>
+              <th>Cantidad</th>
+              <th>Unidad</th>
+              <th>Costo Unitario</th>
+              <th>Tipo Horario</th>
+              <th>Multiplicador</th>
+              <th>Subtotal</th>
+              <th>Acciones</th>
             </tr>
           </thead>
-          
+
           <tbody>
             {/* Filas con los items existentes */}
             {items.map(item => {
               const multiplicador = parseFloat(item.multiplier) || multiplicadores[item.type] || 1;
               const quantity = parseFloat(item.quantity) || 0;
               const unitCost = parseFloat(item.unit_cost) || 0;
-              
+
               return (
                 <tr key={item.id}>
                   <td>{item.description}</td>
@@ -269,12 +272,12 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
                 </tr>
               );
             })}
-            
+
             {/* Fila para añadir nuevo item */}
             <tr className="bg-bg-beige/50">
               <td>
                 <div className="mb-2">
-                  <select 
+                  <select
                     className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                     onChange={handleCatalogItemSelect}
                     value={selectedCatalogItem?.id || ''}
@@ -372,7 +375,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
               </td>
             </tr>
           </tbody>
-          
+
           {/* Pie de la tabla con el total de esta categoría */}
           <tfoot>
             <tr className="bg-table-gray-light font-bold">
@@ -383,7 +386,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
           </tfoot>
         </table>
       </div>
-      
+
       {items.length === 0 && (
         <div className="p-4 text-center text-gray-500">
           No hay mano de obra registrada. Agrega una usando el formulario de arriba.

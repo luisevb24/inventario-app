@@ -3,6 +3,8 @@
 :root {
   --background: #006c68;
   --foreground: #faf6f3;
+  --text-color: #052a30;
+  --grow-green: #b4c0a2;
 }
 
 body {
@@ -11,10 +13,31 @@ body {
   font-family: var(--font-satoshi), Arial, Helvetica, sans-serif;
 }
 
+/* Add text color override for content areas */
+.container {
+  color: var(--text-color);
+}
+
+/* Make sure white backgrounds get the correct text color */
+.bg-white {
+  color: var(--text-color);
+}
+.bg-dark{
+  color: var(--foreground);
+}
+
+.table-header{
+  background-color: var(--grow-green) ;
+}
+
+.table-content{
+  background-color: #faf6f3;
+}
 /* Simplificar bordes de tabla */
 table {
   border-collapse: separate;
   border-spacing: 0;
+  background-color: #faf6f3;
 }
 
 th, td {
@@ -22,9 +45,6 @@ th, td {
 }
 
 /* Mejorar aspecto visual de las tablas */
-thead th {
-  @apply bg-gray-100 text-gray-700 font-medium;
-}
 
 tbody tr:nth-child(even) {
   @apply bg-gray-50;

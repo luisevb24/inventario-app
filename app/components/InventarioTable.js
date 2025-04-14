@@ -134,15 +134,15 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
   }, 0);
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+    <div className="bg-white rounded-lg shadow overflow-hidden mb-6 text-tertiary">
       {error && (
         <div className="p-4 bg-red-100 border-l-4 border-red-500 text-red-700">
           <p>{error}</p>
         </div>
       )}
 
-      <div className="overflow-x-auto text-tertiary">
-        <table className="w-full">
+      <div className="overflow-x-auto">
+        <table className="w-full" style={{ backgroundColor: '#faf6f3' }}>
           <thead>
             <tr>
               <th className="text-left">Descripción</th>
@@ -154,7 +154,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="table-header">
             {/* Filas con los items existentes */}
             {items.map(item => {
               const quantity = parseFloat(item.quantity) || 0;

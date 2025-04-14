@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#e69500',     // Naranja/ámbar
+        primary: '#faf6f3',     // Naranja/ámbar
         secondary: '#006c68',   // Verde azulado
         tertiary: '#052a30',    // Azul marino
         accent: '#e69500',      // Amarillo/naranja como acento
