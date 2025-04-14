@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { fetchCatalogItems } from '../../lib/supabase';
+import { fetchCatalogItems, fetchUnitCosts } from '../../lib/supabase';
 
 export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectId }) {
   // Multiplicadores para cada tipo de horario
@@ -22,29 +22,47 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
     multiplier: 1
   });
 
-  // Estado para catálogo de mano de obra
+  // Estados para catálogos
   const [catalogItems, setCatalogItems] = useState([]);
+  const [unitCosts, setUnitCosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCatalogItem, setSelectedCatalogItem] = useState(null);
+  const [selectedUnitCost, setSelectedUnitCost] = useState(null);
 
-  // Cargar catálogo desde Supabase
+  // Cargar catálogo y costos unitarios desde Supabase
   useEffect(() => {
-    async function loadCatalog() {
+    async function loadData() {
       setLoading(true);
       setError(null);
       try {
+        // Obtener items de mano de obra del catálogo
         const items = await fetchCatalogItems('Mano de obra');
         setCatalogItems(items);
+        
+        // Obtener costos unitarios para mano de obra
+        const costs = await fetchUnitCosts(true); // true = solo para mano de obra
+        setUnitCosts(costs);
+        
+        // Establecer unidad por defecto si hay alguna disponible
+        if (costs.length > 0) {
+          const defaultUnit = costs.find(u => u.name === 'horas') || costs[0];
+          setNewItem(prev => ({
+            ...prev,
+            unit: defaultUnit.name,
+            unit_cost: defaultUnit.default_cost
+          }));
+          setSelectedUnitCost(defaultUnit);
+        }
       } catch (error) {
-        console.error('Error al cargar catálogo de mano de obra:', error);
-        setError('No se pudo cargar el catálogo');
+        console.error('Error al cargar datos:', error);
+        setError('No se pudieron cargar los datos necesarios');
       } finally {
         setLoading(false);
       }
     }
 
-    loadCatalog();
+    loadData();
   }, []);
 
   // Manejar cambios en los campos del formulario
@@ -64,6 +82,23 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
         ...newItem,
         [name]: numericValue
       });
+    } else if (name === 'unit') {
+      // Buscar el costo unitario correspondiente
+      const unitCost = unitCosts.find(uc => uc.name === value);
+      if (unitCost) {
+        setSelectedUnitCost(unitCost);
+        setNewItem({
+          ...newItem,
+          unit: value,
+          unit_cost: unitCost.default_cost
+        });
+      } else {
+        setSelectedUnitCost(null);
+        setNewItem({
+          ...newItem,
+          unit: value
+        });
+      }
     } else {
       setNewItem({
         ...newItem,
@@ -77,11 +112,15 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
     const itemId = e.target.value;
     if (itemId === '') {
       setSelectedCatalogItem(null);
+      // Mantener la unidad y costo unitario actuales
+      const currentUnit = newItem.unit;
+      const currentUnitCost = newItem.unit_cost;
+      
       setNewItem({
         description: '',
         quantity: 1,
-        unit: 'horas',
-        unit_cost: 0,
+        unit: currentUnit,
+        unit_cost: currentUnitCost,
         type: 'Normal',
         multiplier: 1,
         category: 'Mano de obra'
@@ -92,10 +131,23 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
     const selected = catalogItems.find(item => item.id.toString() === itemId);
     if (selected) {
       setSelectedCatalogItem(selected);
+      
+      // Mantener la unidad seleccionada si es posible
+      let unitToUse = selected.unit || 'horas';
+      let costToUse = parseFloat(selected.unit_cost) || 0;
+      
+      // Si la unidad del item seleccionado existe en nuestra tabla de costos unitarios,
+      // usar su costo por defecto
+      const unitCost = unitCosts.find(uc => uc.name === unitToUse);
+      if (unitCost) {
+        setSelectedUnitCost(unitCost);
+        costToUse = unitCost.default_cost;
+      }
+      
       setNewItem({
         description: selected.description,
-        unit: selected.unit || 'horas',
-        unit_cost: parseFloat(selected.unit_cost) || 0,
+        unit: unitToUse,
+        unit_cost: costToUse,
         quantity: 1,
         type: selected.type || 'Normal',
         multiplier: parseFloat(selected.multiplier) || multiplicadores[selected.type] || 1,
@@ -132,19 +184,23 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
       category: 'Mano de obra'
     };
     
-    // Solo agregar catalog_item_id si existe
+    // Añadir referencias si existen
     if (newItem.catalog_item_id) {
       itemToAdd.catalog_item_id = newItem.catalog_item_id;
     }
     
+    if (selectedUnitCost) {
+      itemToAdd.unit_cost_id = selectedUnitCost.id;
+    }
+    
     onAddItem(itemToAdd);
     
-    // Restablecer el formulario
+    // Restablecer la descripción y cantidad, pero mantener la unidad y su costo
     setNewItem({
       description: '',
       quantity: 1,
-      unit: 'horas',
-      unit_cost: 0,
+      unit: newItem.unit,
+      unit_cost: newItem.unit_cost,
       type: 'Normal',
       multiplier: 1,
       category: 'Mano de obra'
@@ -255,15 +311,23 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
                 />
               </td>
               <td>
-                <input
-                  type="text"
+                <select
                   name="unit"
                   value={newItem.unit}
                   onChange={handleChange}
-                  placeholder="ej. horas, días"
                   className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                   required
-                />
+                >
+                  {unitCosts.length > 0 ? (
+                    unitCosts.map(unitCost => (
+                      <option key={unitCost.id} value={unitCost.name}>
+                        {unitCost.name} (${unitCost.default_cost.toFixed(2)})
+                      </option>
+                    ))
+                  ) : (
+                    <option value="horas">horas</option>
+                  )}
+                </select>
               </td>
               <td>
                 <input
