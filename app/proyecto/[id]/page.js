@@ -138,14 +138,17 @@ export default function ProyectoPage() {
         <Link href="/" className="bg-tertiary hover:bg-tertiary/90 text-white py-2 px-4 rounded transition-colors">
           ← Volver
         </Link>
-        <h1 className="text-2xl font-bold text-center">{projectId}</h1>
+        <h1 className="text-tertiary text-2xl font-bold text-center">
+          Presupuesto</h1>
+        <h1 className="text-2xl font-bold text-center">
+          {projectId}</h1>
         <div className="w-28"></div> {/* Spacer for alignment */}
       </div>
       
       {/* Project Info Card */}
       {projectData && (
         <div className="bg-white rounded-lg shadow overflow-hidden mb-8">
-          <div className="p-4 bg-gray-50 border-b border-gray-200">
+          <div className="p-4 bg-gray-50 border-b border-gray-200 ">
             <h2 className="text-xl font-semibold text-tertiary">Información del Ticket</h2>
           </div>
           <div className="p-4">

@@ -227,7 +227,7 @@ export default function ManoObraTable({ items, onAddItem, onRemoveItem, projectI
         </div>
       )}
       
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto text-tertiary">
         <table className="w-full">
           <thead>
             <tr>
