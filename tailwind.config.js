@@ -5,7 +5,6 @@ module.exports = {
     "./pages/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'class', // Enable class-based dark mode
   theme: {
     extend: {
       colors: {
@@ -21,10 +20,7 @@ module.exports = {
           dark: '#153846',
           darker: '#052a30',
         },
-        background: {
-          dark: '#006c68',
-          light: '#faf6f3',
-        }
+        background: '#faf6f3',  // Single background color
       },
       fontFamily: {
         sans: ['var(--font-satoshi)', 'var(--font-inter)', 'sans-serif'],

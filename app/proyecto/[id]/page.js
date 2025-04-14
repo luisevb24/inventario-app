@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import InventarioTable from '../../components/InventarioTable';
 import ManoObraTable from '../../components/ManoObraTable';
 import TotalGeneral from '../../components/TotalGeneral';
@@ -126,22 +127,27 @@ export default function ProyectoPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
   
   return (
     <main className="max-w-6xl mx-auto p-4">
-      <div className="my-6">
-        <h1 className="text-2xl font-bold text-center">Presupuesto</h1>
+      <div className="flex justify-between items-center mb-6">
+        <Link href="/" className="bg-tertiary hover:bg-tertiary/90 text-white py-2 px-4 rounded transition-colors">
+          ← Volver
+        </Link>
         <h1 className="text-2xl font-bold text-center">{projectId}</h1>
+        <div className="w-28"></div> {/* Spacer for alignment */}
       </div>
       
       {/* Project Info Card */}
       {projectData && (
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
-          <h2 className="text-xl font-semibold p-4 bg-blue-100 border-b">Info de Ticket</h2>
+        <div className="bg-white rounded-lg shadow overflow-hidden mb-8">
+          <div className="p-4 bg-gray-50 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-tertiary">Información del Ticket</h2>
+          </div>
           <div className="p-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -170,8 +176,8 @@ export default function ProyectoPage() {
       )}
       
       {/* Labor Section */}
-      <div className="my-8">
-        <h2 className="text-xl font-semibold mb-4">Mano de Obra</h2>
+      <div className="my-6">
+        <h2 className="text-xl font-semibold mb-2">Mano de Obra</h2>
         <ManoObraTable 
           items={getItemsByCategory('Mano de obra')} 
           onAddItem={addItem} 
@@ -182,8 +188,8 @@ export default function ProyectoPage() {
       
       {/* Render a table for each category */}
       {categorias.map(categoria => (
-        <div key={categoria} className="my-8">
-          <h2 className="text-xl font-semibold mb-4">{categoria}</h2>
+        <div key={categoria} className="my-6">
+          <h2 className="text-xl font-semibold mb-2">{categoria}</h2>
           <InventarioTable 
             items={getItemsByCategory(categoria)} 
             onAddItem={addItem} 

@@ -40,7 +40,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
   // Manejar cambios en los campos del formulario
   function handleChange(e) {
     const { name, value } = e.target;
-    
+
     if (name === 'quantity' || name === 'unit_cost') {
       // Asegurar que los valores numéricos sean parseados correctamente
       const numericValue = value === '' ? '' : parseFloat(value) || 0;
@@ -88,18 +88,18 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
   // Manejar envío del formulario
   function handleSubmit(e) {
     e.preventDefault();
-    
+
     // Validar datos antes de enviar
     if (!newItem.description.trim()) {
       alert('La descripción es obligatoria');
       return;
     }
-    
+
     if (!projectId) {
       alert('No se ha seleccionado un proyecto');
       return;
     }
-    
+
     // Preparar el objeto para agregar al inventario
     const itemToAdd = {
       project_id: projectId,
@@ -109,14 +109,14 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
       unit_cost: parseFloat(newItem.unit_cost) || 0,
       category: categoria
     };
-    
+
     // Solo agregar catalog_item_id si existe
     if (newItem.catalog_item_id) {
       itemToAdd.catalog_item_id = newItem.catalog_item_id;
     }
-    
+
     onAddItem(itemToAdd);
-    
+
     // Restablecer el formulario
     setNewItem({
       description: '',
@@ -140,7 +140,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
           <p>{error}</p>
         </div>
       )}
-      
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -153,13 +153,13 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
               <th className="text-left">Acciones</th>
             </tr>
           </thead>
-          
+
           <tbody>
             {/* Filas con los items existentes */}
             {items.map(item => {
               const quantity = parseFloat(item.quantity) || 0;
               const unitCost = parseFloat(item.unit_cost) || 0;
-              
+
               return (
                 <tr key={item.id}>
                   <td>{item.description}</td>
@@ -178,12 +178,12 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
                 </tr>
               );
             })}
-            
+
             {/* Fila para añadir nuevo item */}
             <tr className="bg-bg-beige/50">
               <td>
                 <div className="mb-2">
-                  <select 
+                  <select
                     className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                     onChange={handleCatalogItemSelect}
                     value={selectedCatalogItem?.id || ''}
@@ -257,7 +257,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
               </td>
             </tr>
           </tbody>
-          
+
           {/* Pie de la tabla con el total de esta categoría */}
           <tfoot>
             <tr className="bg-table-gray-light font-bold">
@@ -268,7 +268,7 @@ export default function InventarioTable({ items, onAddItem, onRemoveItem, catego
           </tfoot>
         </table>
       </div>
-      
+
       {items.length === 0 && (
         <div className="p-4 text-center text-gray-500">
           No hay items en {categoria}. Agrega uno usando el formulario de arriba.

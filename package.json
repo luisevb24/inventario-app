@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "node scripts/cleanup-theme.js && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "cleanup-theme": "node scripts/cleanup-theme.js"
   },
   "dependencies": {
     "@notionhq/client": "^2.3.0",

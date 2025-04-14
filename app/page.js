@@ -1,206 +1,115 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import InventarioTable from './components/InventarioTable';
-import ManoObraTable from './components/ManoObraTable';
-import TotalGeneral from './components/TotalGeneral';
 import Link from 'next/link';
-import { 
-  fetchProjectById,
-  fetchInventoryItems,
-  addInventoryItem,
-  deleteInventoryItem,
-  upsertProject
-} from '../lib/supabase';
+import { fetchProjects } from '../lib/supabase';
 
-export default function ProyectoPage() {
-  const params = useParams();
-  const projectId = params.id;
-  
-  // State for project data and items
-  const [projectData, setProjectData] = useState(null);
-  const [items, setItems] = useState([]);
+export default function HomePage() {
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // Available categories
-  const categorias = ['Equipo', 'Materiales', 'Consumibles', 'Otros'];
-  
-  // Cargar datos del proyecto desde Supabase
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Cargar proyectos desde Supabase
   useEffect(() => {
-    async function fetchProjectData() {
+    async function loadProjects() {
       try {
         setLoading(true);
-        
-        // Obtener información del proyecto
-        const project = await fetchProjectById(projectId);
-        
-        if (project) {
-          setProjectData(project);
-        } else {
-          // Si el proyecto no existe en Supabase pero sí en Notion
-          // Lo primero es obtener datos de Notion
-          try {
-            const response = await fetch(`/api/notion?projectId=${projectId}`);
-            const data = await response.json();
-            
-            if (data.error) {
-              console.error('Error fetching project data from Notion:', data.error);
-              return;
-            }
-            
-            // Crear el proyecto en Supabase
-            const notionData = data.projectData;
-            const newProject = {
-              id: projectId,
-              title: notionData.id,
-              status: notionData.status,
-              responsible: notionData.responsable,
-              work_type: notionData.tipoTrabajo,
-              commitment_date: notionData.fechaCompromiso
-            };
-            
-            const createdProject = await upsertProject(newProject);
-            if (createdProject) {
-              setProjectData(createdProject);
-            } else {
-              setProjectData(newProject);
-            }
-          } catch (error) {
-            console.error('Error creating project from Notion data:', error);
-          }
-        }
-        
-        // Obtener los items del inventario
-        const inventoryItems = await fetchInventoryItems(projectId);
-        setItems(inventoryItems);
-        
+        const projectList = await fetchProjects();
+        setProjects(projectList);
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error loading projects:', error);
       } finally {
         setLoading(false);
       }
     }
-    
-    if (projectId) {
-      fetchProjectData();
-    }
-  }, [projectId]);
-  
-  // Función para agregar un nuevo item
-  async function addItem(newItem) {
-    try {
-      const addedItem = await addInventoryItem(newItem);
-      if (addedItem) {
-        setItems([...items, addedItem]);
-      }
-    } catch (error) {
-      console.error('Error al agregar item:', error);
-    }
-  }
-  
-  // Función para eliminar un item
-  async function removeItem(id) {
-    try {
-      const success = await deleteInventoryItem(id);
-      if (success) {
-        setItems(items.filter(item => item.id !== id));
-      }
-    } catch (error) {
-      console.error('Error al eliminar item:', error);
-    }
-  }
-  
-  // Filtrar items por categoría
-  function getItemsByCategory(categoria) {
-    return items.filter(item => item.category === categoria);
-  }
-  
-  // Calcular total considerando multiplicadores para items de mano de obra
-  const totalGeneral = items.reduce((sum, item) => {
-    if (item.category === 'Mano de obra') {
-      const multiplicador = item.multiplier || 1;
-      return sum + (item.quantity * item.unit_cost * multiplicador);
-    }
-    return sum + (item.quantity * item.unit_cost);
-  }, 0);
-  
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-  
+
+    loadProjects();
+  }, []);
+
+  // Filtrar proyectos según el término de búsqueda
+  const filteredProjects = projects.filter(project => 
+    project.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (project.title && project.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (project.status && project.status.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (project.responsible && project.responsible.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   return (
-    <main>
-      <div className="flex justify-between items-center mb-6">
-        <Link href="/" className="bg-tertiary hover:bg-tertiary/90 text-white py-2 px-4 rounded transition-colors">
-          ← Volver
-        </Link>
-        <h1 className="text-2xl font-bold text-center">{projectId}</h1>
-        <Link href="/catalogo" className="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded transition-colors">
-          Catálogo
-        </Link>
-      </div>
-      
-      {/* Project Info Card */}
-      {projectData && (
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-8">
-          <div className="p-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="font-semibold">ID Proyecto:</p>
-                <p>{projectData.id}</p>
-              </div>
-              <div>
-                <p className="font-semibold">Estado:</p>
-                <p>{projectData.status}</p>
-              </div>
-              <div>
-                <p className="font-semibold">Responsable:</p>
-                <p>{projectData.responsible}</p>
-              </div>
-              <div>
-                <p className="font-semibold">Tipo de Trabajo:</p>
-                <p>{projectData.work_type}</p>
-              </div>
-              <div>
-                <p className="font-semibold">Fecha Compromiso:</p>
-                <p>{projectData.commitment_date && new Date(projectData.commitment_date).toLocaleDateString()}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Labor Section */}
-      <div className="my-6">
-        <h2 className="text-xl font-semibold mb-2">Mano de Obra</h2>
-        <ManoObraTable 
-          items={getItemsByCategory('Mano de obra')} 
-          onAddItem={addItem} 
-          onRemoveItem={removeItem}
-          projectId={projectId}
-        />
-      </div>
-      
-      {/* Render a table for each category */}
-      {categorias.map(categoria => (
-        <div key={categoria} className="my-6">
-          <h2 className="text-xl font-semibold mb-2">{categoria}</h2>
-          <InventarioTable 
-            items={getItemsByCategory(categoria)} 
-            onAddItem={addItem} 
-            onRemoveItem={removeItem}
-            categoria={categoria}
-            projectId={projectId}
+    <main className="max-w-6xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-tertiary mb-6">Presupuesto de Tickets</h1>
+        
+        {/* Search bar */}
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Buscar por ID, título, estado o responsable..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
           />
         </div>
-      ))}
-      
-      {/* Total Summary Component */}
-      <TotalGeneral total={totalGeneral} />
+        
+        {/* Projects list */}
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="p-4 bg-gray-50 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-tertiary">Tickets activos</h2>
+            </div>
+            
+            {filteredProjects.length > 0 ? (
+              <ul className="divide-y divide-gray-200">
+                {filteredProjects.map(project => (
+                  <li key={project.id} className="hover:bg-gray-50">
+                    <Link 
+                      href={`/proyecto/${project.id}`}
+                      className="block p-4"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="text-lg font-semibold text-tertiary">{project.id}</h3>
+                          <p className="text-gray-600">{project.title}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-800">
+                            {project.status || 'Sin estado'}
+                          </span>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {project.responsible || 'Sin responsable'}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="p-8 text-center text-gray-500">
+                {searchTerm ? 'No se encontraron proyectos con ese criterio de búsqueda.' : 'No hay proyectos registrados.'}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Instructions if no projects */}
+        {!loading && projects.length === 0 && (
+          <div className="mt-8 p-6 bg-white rounded-lg shadow">
+            <h2 className="text-xl font-semibold text-tertiary mb-4">¿Cómo empezar?</h2>
+            <p className="mb-4">
+              Para comenzar a utilizar la aplicación, necesitas crear un presupuesto para un ticket existente. 
+              Simplemente ingresa el ID del ticket en la URL: <code>/proyecto/T-XXXX</code> 
+              (donde XXXX es el número de ticket).
+            </p>
+            <p>
+              La aplicación importará automáticamente los datos del ticket desde Notion y te permitirá 
+              crear un presupuesto detallado.
+            </p>
+          </div>
+        )}
+      </div>
     </main>
   );
 }
